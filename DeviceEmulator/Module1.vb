@@ -12,6 +12,7 @@ Module Module1
     Private mDataReceived As Boolean = False
     Private mPort As New IO.Ports.SerialPort("COM1", 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
     Private mMutex As New Threading.Mutex()
+    Private mLock As New Object()
 
     Sub Main()
 
@@ -35,7 +36,6 @@ Module Module1
             Loop
             Console.WriteLine("working")
             'Запускаем поток working
-            'Dim t As New Task(AddressOf working)
             Dim tWorking As New Threading.Thread(New Threading.ThreadStart(AddressOf working))
             tWorking.Start()
             Console.WriteLine("Echo:")
@@ -45,20 +45,17 @@ Module Module1
                     tWorking.Abort()
                     Exit Do
                 End If
-                'Ожидаем завершения отправки сообщения в потоке tWorking
-                mMutex.WaitOne()
-                'Отсылаем то, что пришло из консоли.
-                mPort.Write(str)
-                'Снова запускаем отправку сообщений в потоке tWorking
-                mMutex.ReleaseMutex()
+                SyncLock mLock
+                    mPort.Write(str)
+                End SyncLock
             Loop
         Loop
     End Sub
     Private Sub working()
         Do
-            mMutex.WaitOne()
-            mPort.Write(IN_WORK)
-            mMutex.ReleaseMutex()
+            SyncLock mLock
+                mPort.Write(IN_WORK)
+            End SyncLock
             Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
         Loop
     End Sub
