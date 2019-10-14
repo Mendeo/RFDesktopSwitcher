@@ -19,33 +19,39 @@ Module Module1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
         mPort.Open()
 
-        Console.WriteLine("ready")
-        Dim buff(0) As Char
         Do
-            If mDataReceived Then
-                mDataReceived = False
-                mPort.Read(buff, 0, 1)
-                If buff(0) = ANSWER Then
+            Console.WriteLine("ready")
+            Dim buff(0) As Char
+            Do
+                If mDataReceived Then
+                    mDataReceived = False
+                    mPort.Read(buff, 0, 1)
+                    If buff(0) = ANSWER Then
+                        Exit Do
+                    End If
+                End If
+                mPort.Write(READY)
+                Threading.Thread.Sleep(SCAN_TIMEOUT)
+            Loop
+            Console.WriteLine("working")
+            'Запускаем поток working
+            'Dim t As New Task(AddressOf working)
+            Dim tWorking As New Threading.Thread(New Threading.ThreadStart(AddressOf working))
+            tWorking.Start()
+            Console.WriteLine("Echo:")
+            Do
+                Dim str As String = Console.ReadLine
+                If str.Equals("reboot") Then
+                    tWorking.Abort()
                     Exit Do
                 End If
-            End If
-            mPort.Write(READY)
-            Threading.Thread.Sleep(SCAN_TIMEOUT)
-        Loop
-        Console.WriteLine("working")
-        'Запускаем поток working
-        'Dim t As New Task(AddressOf working)
-        Dim tWorking As New Threading.Thread(New Threading.ThreadStart(AddressOf working))
-        tWorking.Start()
-        Console.WriteLine("Echo:")
-        Do
-            Dim str As String = Console.ReadLine
-            'Ожидаем завершения отправки сообщения в потоке tWorking
-            mMutex.WaitOne()
-            'Отсылаем то, что пришло из консоли.
-            mPort.Write(str)
-            'Снова запускаем отправку сообщений в потоке tWorking
-            mMutex.ReleaseMutex()
+                'Ожидаем завершения отправки сообщения в потоке tWorking
+                mMutex.WaitOne()
+                'Отсылаем то, что пришло из консоли.
+                mPort.Write(str)
+                'Снова запускаем отправку сообщений в потоке tWorking
+                mMutex.ReleaseMutex()
+            Loop
         Loop
     End Sub
     Private Sub working()

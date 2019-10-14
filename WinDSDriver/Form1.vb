@@ -3,8 +3,8 @@
     Private Const IN_WORK As Char = "w"c
     Private Const ANSWER As Char = "o"c
     Private Const FIRE As Char = "f"c
-    Private Const SCAN_TIMEOUT As Integer = 100
-    Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000
+    Private Const SCAN_TIMEOUT As Integer = 100 * 2
+    Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         Dim hasConnection As Boolean = False
@@ -36,6 +36,7 @@
                 devPort.Read(buff, 0, 1)
             Catch ex As Exception
                 MsgBox("Устройство перестало отвечать.", MsgBoxStyle.Critical)
+                devPort.Close()
                 Return
             End Try
             If Not buff(0) = IN_WORK Then
@@ -43,6 +44,7 @@
                     onFire()
                 Else
                     MsgBox("От устройства пришли неожиданные данные.", MsgBoxStyle.Critical)
+                    devPort.Close()
                     Return
                 End If
             End If
