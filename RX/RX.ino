@@ -1,9 +1,9 @@
 #define RX_PIN 7
 #define ERROR_VALUE 2
 #define PAUSE_TIME 8000
-#define WAIT_SIMBOL 125
-#define IN_WORK_SIMBOL 113
-#define COMP_ANSWER 100
+#define WAIT_SIMBOL 'r'
+#define IN_WORK_SIMBOL 'w'
+#define COMP_ANSWER 'o'
 
 const uint8_t RX_DATA[] = {12, 43, 29, 42, 24};
 unsigned long _sysTime;
