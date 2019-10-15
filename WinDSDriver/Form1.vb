@@ -5,52 +5,74 @@
     Private Const FIRE As Char = "f"c
     Private Const SCAN_TIMEOUT As Integer = 100 * 2
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
+    Private mHasConnection As Boolean = False
+    Private mWorkingThread As Threading.Thread
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        Dim hasConnection As Boolean = False
-        Dim buff(0) As Char
-        devPort.ReadTimeout = SCAN_TIMEOUT
-        For Each sp As String In My.Computer.Ports.SerialPortNames
-            devPort.PortName = sp
-            Try
-                devPort.Open()
-                devPort.Read(buff, 0, 1)
-            Catch ex As Exception
-                buff(0) = vbNullChar
-            End Try
-            If buff(0) = READY Then
-                hasConnection = True
-                Exit For
+    Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        If mHasConnection Then
+            If mWorkingThread IsNot Nothing Then mWorkingThread.Abort()
+        Else
+            Dim buff(0) As Char
+            devPort.ReadTimeout = SCAN_TIMEOUT
+            For Each sp As String In My.Computer.Ports.SerialPortNames
+                devPort.PortName = sp
+                Try
+                    devPort.Open()
+                    devPort.Read(buff, 0, 1)
+                Catch ex As Exception
+                    buff(0) = vbNullChar
+                End Try
+                If buff(0) = READY Then
+                    mHasConnection = True
+                    Exit For
+                End If
+                devPort.Close()
+            Next
+            If Not mHasConnection Then
+                log("Устройство не найдено.")
+                Return
             End If
-            devPort.Close()
-        Next
-        If Not hasConnection Then
-            MsgBox("Устройство не найдено.", MsgBoxStyle.Exclamation)
-            Return
+            log("Соединение установлено (" & devPort.PortName & ")")
+            devPort.Write(ANSWER)
+            Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
+            'Читаем порт, проверяем, что устройство подключено.
+            devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
+            mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
+            mWorkingThread.Start()
         End If
-        devPort.Write(ANSWER)
-        'Читаем порт, проверяем, что устройство подключено.
-        devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
+    End Sub
+    Private Sub onFire()
+        log("Fire!")
+    End Sub
+    Private Delegate Sub SafeLog(m As String)
+    Private Sub log(m As String)
+        If console_RTB.InvokeRequired Then
+            console_RTB.Invoke(New SafeLog(AddressOf log), {m})
+        Else
+            console_RTB.AppendText(m & vbCrLf)
+        End If
+    End Sub
+    Private Sub working()
+        Dim buff(0) As Char
         Do
             Try
                 devPort.Read(buff, 0, 1)
             Catch ex As Exception
-                MsgBox("Устройство перестало отвечать.", MsgBoxStyle.Critical)
+                log("Устройство перестало отвечать.")
                 devPort.Close()
+                mHasConnection = False
                 Return
             End Try
             If Not buff(0) = IN_WORK Then
                 If buff(0) = FIRE Then
                     onFire()
                 Else
-                    MsgBox("От устройства пришли неожиданные данные.", MsgBoxStyle.Critical)
+                    log("От устройства пришли неожиданные данные: " & buff(0))
                     devPort.Close()
+                    mHasConnection = False
                     Return
                 End If
             End If
         Loop
-    End Sub
-    Private Sub onFire()
-        console_RTB.AppendText("Fire!" & vbCrLf)
     End Sub
 End Class

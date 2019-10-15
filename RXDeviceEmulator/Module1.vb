@@ -11,7 +11,6 @@ Module Module1
 
     Private mDataReceived As Boolean = False
     Private mPort As New IO.Ports.SerialPort("COM1", 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
-    Private mMutex As New Threading.Mutex()
     Private mLock As New Object()
 
     Sub Main()
