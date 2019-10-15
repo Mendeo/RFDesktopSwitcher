@@ -41,6 +41,7 @@
             mWorkingThread.Start()
         End If
     End Sub
+
     Private Sub onFire()
         log("Fire!")
     End Sub
@@ -74,5 +75,9 @@
                 End If
             End If
         Loop
+    End Sub
+
+    Private Sub Form1_Closed(sender As Object, e As EventArgs) Handles Me.Closed
+        mWorkingThread.Abort()
     End Sub
 End Class
