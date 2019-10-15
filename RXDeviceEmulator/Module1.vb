@@ -10,11 +10,12 @@ Module Module1
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000
 
     Private mDataReceived As Boolean = False
-    Private mPort As New IO.Ports.SerialPort("COM1", 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
+    Private mPort As IO.Ports.SerialPort
     Private mLock As New Object()
 
     Sub Main()
-
+        Console.Write("Port name: ")
+        mPort = New IO.Ports.SerialPort(Console.ReadLine, 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
         mPort.ReceivedBytesThreshold = 1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
         mPort.Open()
