@@ -12,10 +12,11 @@
         'log(OpenDesktopA("Themen Desktop", 0, False, ACCESS_MASK.GENERIC_ALL))
 
         Dim hdesk As Integer '= OpenInputDesktop(0, False, ACCESS_MASK.GENERIC_ALL)
-        hdesk = CreateDesktopA("Hi", "df", IntPtr.Zero, 0, ACCESS_MASK.GENERIC_ALL, IntPtr.Zero)
+        'hdesk = CreateDesktopA("Hi", "df", IntPtr.Zero, 0, ACCESS_MASK.GENERIC_ALL, IntPtr.Zero)
+        hdesk = GetThreadDesktop(GetCurrentThreadId()) 'Threading.Thread.CurrentThread.ManagedThreadId)
         log(hdesk)
-        'Threading.Thread.Sleep(10000)
-        'log(SwitchDesktop(hdesk))
+        Threading.Thread.Sleep(10000)
+        log(SetThreadDesktop(hdesk))
         'log(Hex(ACCESS_MASK.GENERIC_ALL))
 
         'System.Runtime.InteropServices.
@@ -189,4 +190,7 @@
     Declare Auto Function CloseDesktop Lib "user32" Alias "CloseDesktop" (hDesktop As Integer) As Boolean
     Declare Auto Function CreateDesktopA Lib "user32" Alias "CreateDesktopA" (lpszDesktop As String, lpszDevice As String, pDevmode As IntPtr, dwFlags As Integer, dwDesiredAccess As Integer, lpsa As IntPtr) As Integer
     Declare Auto Function SwitchDesktop Lib "user32" Alias "SwitchDesktop" (hDesktop As Integer) As Boolean
+    Declare Auto Function GetThreadDesktop Lib "user32" Alias "GetThreadDesktop" (dwThreadId As Integer) As Integer
+    Declare Auto Function GetCurrentThreadId Lib "Kernel32" Alias "GetCurrentThreadId" () As Integer
+    Declare Auto Function SetThreadDesktop Lib "user32" Alias "SetThreadDesktop" (hDesktop As Integer) As Boolean
 End Class
