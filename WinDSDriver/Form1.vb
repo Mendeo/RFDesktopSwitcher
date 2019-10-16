@@ -2,10 +2,11 @@
 Option Strict On
 
 Public Class Form1
-    Private Const READY As Char = "r"c
-    Private Const IN_WORK As Char = "w"c
-    Private Const ANSWER As Char = "o"c
-    Private Const FIRE As Char = "f"c
+    Private Const COMMAND_READY As Char = "r"c
+    Private Const COMMAND_IN_WORK As Char = "w"c
+    Private Const COMMAND_ANSWER As Char = "o"c
+    Private Const COMMAND_FIRE As Char = "f"c
+    Private Const COMMAND_DISCONNECT As Char = "d"c
     Private Const SCAN_TIMEOUT As Integer = 100 * 2
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
     Private mHasConnection As Boolean = False
@@ -17,46 +18,87 @@ Public Class Form1
     Private Const VK_RIGHT As Byte = &H27
     Private Const KEYEVENTF_KEYUP As Byte = &H2
 
-    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'icon_NI.ContextMenu
-        Dim mi As New MenuItem("Выход", Sub() Application.Exit())
-        Dim cm As New ContextMenu({mi})
-        icon_NI.ContextMenu = cm
-    End Sub
+    Private Const CONNECT_MENU_TEXT As String = "Соединить"
+    Private Const DISCONNECT_MENU_TEXT As String = "Разъединить"
+    Private Const EXIT_MENU_TEXT As String = "Выход"
 
-    Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'Dim menu(1) As MenuItem
+        'menu(0) = New MenuItem(EXIT_MENU_TEXT, Sub() Application.Exit())
+        'menu(1) = New MenuItem(CONNECT_MENU_TEXT, Sub()
+        '                                              If mHasConnection Then
+        '                                                  disconnect()
+        '                                              Else
+        '                                                  connect()
+        '                                              End If
+        '                                          End Sub)
+        'Dim cm As New ContextMenu(menu)
+
+        Dim cms = New ContextMenuStrip()
+        Dim tsMenu(1) As ToolStripMenuItem
+        tsMenu(0) = New ToolStripMenuItem(EXIT_MENU_TEXT)
+        AddHandler tsMenu(0).Click, Sub() Application.Exit()
+        tsMenu(1) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
+        AddHandler tsMenu(1).Click, Sub()
+                                        If mHasConnection Then
+                                            disconnect()
+                                        Else
+                                            connect()
+                                        End If
+                                    End Sub
+        cms.Items.AddRange(tsMenu)
+        icon_NI.ContextMenuStrip = cms
+    End Sub
+    Private Sub changeConnectMenuText()
         If mHasConnection Then
-            If mWorkingThread IsNot Nothing Then mWorkingThread.Abort()
+            icon_NI.ContextMenuStrip.Items.Item(1).Text = DISCONNECT_MENU_TEXT
         Else
-            Dim buff(0) As Char
-            devPort.ReadTimeout = SCAN_TIMEOUT
-            For Each sp As String In My.Computer.Ports.SerialPortNames
-                devPort.PortName = sp
-                Try
-                    devPort.Open()
-                    devPort.Read(buff, 0, 1)
-                Catch ex As Exception
-                    buff(0) = vbNullChar.Chars(0)
-                End Try
-                If buff(0) = READY Then
-                    mHasConnection = True
-                    Exit For
-                End If
-                devPort.Close()
-            Next
-            If Not mHasConnection Then
-                log("Устройство не найдено.")
-                Return
-            End If
-            log("Соединение установлено (" & devPort.PortName & ")")
-            devPort.Write(ANSWER)
-            Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
-            'Читаем порт, проверяем, что устройство подключено.
-            devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
-            mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
-            mWorkingThread.IsBackground = True
-            mWorkingThread.Start()
+            icon_NI.ContextMenuStrip.Items.Item(1).Text = CONNECT_MENU_TEXT
         End If
+    End Sub
+    Private Sub disconnect()
+        mHasConnection = False
+        mWorkingThread.Join()
+        devPort.Write(COMMAND_DISCONNECT)
+        devPort.Close()
+        log("Соединение сброшено")
+        changeConnectMenuText()
+    End Sub
+    Private Sub connect()
+        Dim buff(0) As Char
+        mHasConnection = False
+        devPort.ReadTimeout = SCAN_TIMEOUT
+        For Each sp As String In My.Computer.Ports.SerialPortNames
+            devPort.PortName = sp
+            Try
+                devPort.Open()
+                devPort.Read(buff, 0, 1)
+            Catch ex As Exception
+                buff(0) = vbNullChar.Chars(0)
+            End Try
+            If buff(0) = COMMAND_READY Then
+                mHasConnection = True
+                Exit For
+            End If
+            devPort.Close()
+        Next
+        If Not mHasConnection Then
+            log("Устройство не найдено.")
+            changeConnectMenuText()
+            Return
+        End If
+        log("Соединение установлено (" & devPort.PortName & ")")
+        changeConnectMenuText()
+        devPort.Write(COMMAND_ANSWER)
+        Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
+        'Читаем порт, проверяем, что устройство подключено.
+        devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
+        mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
+        mWorkingThread.IsBackground = True
+        mWorkingThread.Start()
+    End Sub
+    Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
+
     End Sub
 
     Private Sub switchDesktop()
@@ -97,18 +139,21 @@ Public Class Form1
                 log("Устройство перестало отвечать.")
                 devPort.Close()
                 mHasConnection = False
+                changeConnectMenuText()
                 Return
             End Try
-            If Not buff(0) = IN_WORK Then
-                If buff(0) = FIRE Then
+            If Not buff(0) = COMMAND_IN_WORK Then
+                If buff(0) = COMMAND_FIRE Then
                     onFire()
                 Else
                     log("От устройства пришли неожиданные данные: " & buff(0))
                     devPort.Close()
                     mHasConnection = False
+                    changeConnectMenuText()
                     Return
                 End If
             End If
+            If Not mHasConnection Then Exit Do
         Loop
     End Sub
 
