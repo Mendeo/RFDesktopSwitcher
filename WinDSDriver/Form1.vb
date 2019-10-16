@@ -8,18 +8,30 @@
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
 
+    Private Const VK_LCONTROL As Byte = &HA2
+    Private Const VK_LWIN As Byte = &H5B
+    Private Const VK_RIGHT As Byte = &H27
+    Private Const KEYEVENTF_KEYUP As Byte = &H2
+
     Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
         'log(OpenDesktopA("Themen Desktop", 0, False, ACCESS_MASK.GENERIC_ALL))
 
-        Dim hdesk As Integer '= OpenInputDesktop(0, False, ACCESS_MASK.GENERIC_ALL)
+        'Dim hdesk As Integer '= OpenInputDesktop(0, False, ACCESS_MASK.GENERIC_ALL)
         'hdesk = CreateDesktopA("Hi", "df", IntPtr.Zero, 0, ACCESS_MASK.GENERIC_ALL, IntPtr.Zero)
-        hdesk = GetThreadDesktop(GetCurrentThreadId()) 'Threading.Thread.CurrentThread.ManagedThreadId)
-        log(hdesk)
-        Threading.Thread.Sleep(10000)
-        log(SetThreadDesktop(hdesk))
+        'hdesk = GetThreadDesktop(GetCurrentThreadId()) 'Threading.Thread.CurrentThread.ManagedThreadId)
+        'log(hdesk)
+        'Threading.Thread.Sleep(10000)
+        'log(SetThreadDesktop(hdesk))
         'log(Hex(ACCESS_MASK.GENERIC_ALL))
 
-        'System.Runtime.InteropServices.
+        SendKeys(VK_LCONTROL, 0, 0, 0)
+        SendKeys(VK_LWIN, 0, 0, 0)
+        SendKeys(VK_RIGHT, 0, 0, 0)
+        SendKeys(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
+        SendKeys(VK_LWIN, 0, KEYEVENTF_KEYUP, 0)
+        SendKeys(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
+
+
 
 
 
@@ -193,4 +205,6 @@
     Declare Auto Function GetThreadDesktop Lib "user32" Alias "GetThreadDesktop" (dwThreadId As Integer) As Integer
     Declare Auto Function GetCurrentThreadId Lib "Kernel32" Alias "GetCurrentThreadId" () As Integer
     Declare Auto Function SetThreadDesktop Lib "user32" Alias "SetThreadDesktop" (hDesktop As Integer) As Boolean
+
+    Declare Auto Sub SendKeys Lib "user32" Alias "keybd_event" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
 End Class
