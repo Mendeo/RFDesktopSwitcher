@@ -1,4 +1,7 @@
-﻿Public Class Form1
+﻿Option Explicit On
+Option Strict On
+
+Public Class Form1
     Private Const READY As Char = "r"c
     Private Const IN_WORK As Char = "w"c
     Private Const ANSWER As Char = "o"c
@@ -7,11 +10,19 @@
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
+    Private mWatching As Boolean = True
 
     Private Const VK_LCONTROL As Byte = &HA2
     Private Const VK_LWIN As Byte = &H5B
     Private Const VK_RIGHT As Byte = &H27
     Private Const KEYEVENTF_KEYUP As Byte = &H2
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'icon_NI.ContextMenu
+        Dim mi As New MenuItem("Выход", Sub() Application.Exit())
+        Dim cm As New ContextMenu({mi})
+        icon_NI.ContextMenu = cm
+    End Sub
 
     Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
         If mHasConnection Then
@@ -25,7 +36,7 @@
                     devPort.Open()
                     devPort.Read(buff, 0, 1)
                 Catch ex As Exception
-                    buff(0) = vbNullChar
+                    buff(0) = vbNullChar.Chars(0)
                 End Try
                 If buff(0) = READY Then
                     mHasConnection = True
@@ -43,6 +54,7 @@
             'Читаем порт, проверяем, что устройство подключено.
             devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
             mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
+            mWorkingThread.IsBackground = True
             mWorkingThread.Start()
         End If
     End Sub
@@ -58,12 +70,17 @@
 
     Private Sub onFire()
         log("Fire!")
-        switchDesktop()
+        If mWatching Then
+            switchDesktop()
+            mWatching = False
+        End If
     End Sub
 
     Private Delegate Sub SafeLog(m As String)
 
     Private Sub log(m As String)
+        icon_NI.ShowBalloonTip(1000, "", m, ToolTipIcon.Info)
+
         If console_RTB.InvokeRequired Then
             console_RTB.Invoke(New SafeLog(AddressOf log), {m})
         Else
@@ -95,9 +112,9 @@
         Loop
     End Sub
 
-    Private Sub Form1_Closed(sender As Object, e As EventArgs) Handles Me.Closed
-        mWorkingThread.Abort()
-    End Sub
-
     Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        mWatching = True
+    End Sub
 End Class
