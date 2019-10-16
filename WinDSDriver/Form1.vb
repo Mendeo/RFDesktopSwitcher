@@ -24,12 +24,12 @@
         'log(SetThreadDesktop(hdesk))
         'log(Hex(ACCESS_MASK.GENERIC_ALL))
 
-        SendKeys(VK_LCONTROL, 0, 0, 0)
-        SendKeys(VK_LWIN, 0, 0, 0)
-        SendKeys(VK_RIGHT, 0, 0, 0)
-        SendKeys(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
-        SendKeys(VK_LWIN, 0, KEYEVENTF_KEYUP, 0)
-        SendKeys(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
+        keybd_event(VK_LCONTROL, 0, 0, 0)
+        keybd_event(VK_LWIN, 0, 0, 0)
+        keybd_event(VK_RIGHT, 0, 0, 0)
+        keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
+        keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0)
+        keybd_event(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
 
 
 
@@ -206,5 +206,5 @@
     Declare Auto Function GetCurrentThreadId Lib "Kernel32" Alias "GetCurrentThreadId" () As Integer
     Declare Auto Function SetThreadDesktop Lib "user32" Alias "SetThreadDesktop" (hDesktop As Integer) As Boolean
 
-    Declare Auto Sub SendKeys Lib "user32" Alias "keybd_event" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
+    Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
 End Class
