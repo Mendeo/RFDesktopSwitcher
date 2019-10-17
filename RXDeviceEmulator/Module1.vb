@@ -25,6 +25,8 @@ Module Module1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
         AddHandler mPort.DataReceived, AddressOf rebootComPortListener
         mPort.Open()
+        mConListener = New Threading.Thread(New Threading.ThreadStart(AddressOf consoleListener))
+        mConListener.Start()
         Do
             start()
             mEWH.WaitOne()
@@ -34,11 +36,6 @@ Module Module1
     Private Sub start()
         mPort.ReadExisting() 'Очищаем буфер порта
         Console.WriteLine("start " & Threading.Thread.CurrentThread.ManagedThreadId)
-        If mConListener IsNot Nothing AndAlso mConListener.IsAlive Then
-            mConListener.Abort()
-            Console.WriteLine("wait mConListener")
-            'mConListener.Join()
-        End If
         If mTWorking IsNot Nothing AndAlso mTWorking.IsAlive Then
             Console.WriteLine("wait mTWorking")
             mTWorking.Join()
@@ -61,33 +58,25 @@ Module Module1
         mTWorking = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
         mTWorking.IsBackground = True
         mTWorking.Start()
-        Console.WriteLine("Echo:")
-        mConListener = New Threading.Thread(New Threading.ThreadStart(AddressOf consoleListener))
-        mConListener.Start()
     End Sub
 
     Private Sub consoleListener()
         Do
             Dim str As String = Console.ReadLine
-            If str.Equals("reboot") Then
+            If str.Equals("reboot") AndAlso mWorking Then
                 mWorking = False
                 mEWH.Set() 'Запускаем start в главном потоке.
                 Exit Do
-            ElseIf mWorking Then
-                'SyncLock mLock
+            Else
                 mPort.Write(str)
                 Console.WriteLine("Ok!")
-                'End SyncLock
             End If
-            If Not mWorking Then Exit Do
         Loop
     End Sub
     Private Sub rebootComPortListener(sender As Object, e As IO.Ports.SerialDataReceivedEventArgs)
         If mWorking Then
             Dim buff(0) As Char
-            'SyncLock mLock
             mPort.Read(buff, 0, 1)
-            'End SyncLock
             If buff(0) = COMMAND_DISCONNECT Then
                 mWorking = False
                 mDataReceived = False
