@@ -32,7 +32,7 @@ Module Module1
     End Sub
 
     Private Sub start()
-        mPort.Close()
+        mPort.ReadExisting() 'Очищаем буфер порта
         Console.WriteLine("start " & Threading.Thread.CurrentThread.ManagedThreadId)
         If mConListener IsNot Nothing AndAlso mConListener.IsAlive Then
             mConListener.Abort()
@@ -44,7 +44,6 @@ Module Module1
             mTWorking.Join()
         End If
         Console.WriteLine("ready")
-        mPort.Open()
         Dim buff(0) As Char
         Do
             If mDataReceived Then
@@ -92,7 +91,7 @@ Module Module1
             If buff(0) = COMMAND_DISCONNECT Then
                 mWorking = False
                 mDataReceived = False
-                start()
+                mEWH.Set() 'Нужно запустить start так, т.к. при прямом запуске он запускается из другого потока.
             End If
         End If
     End Sub
