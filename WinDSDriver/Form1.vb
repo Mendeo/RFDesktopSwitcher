@@ -36,16 +36,16 @@ Public Class Form1
 
         Dim cms = New ContextMenuStrip()
         Dim tsMenu(1) As ToolStripMenuItem
-        tsMenu(0) = New ToolStripMenuItem(EXIT_MENU_TEXT)
-        AddHandler tsMenu(0).Click, Sub() Application.Exit()
-        tsMenu(1) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
-        AddHandler tsMenu(1).Click, Sub()
+        tsMenu(0) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
+        AddHandler tsMenu(0).Click, Sub()
                                         If mHasConnection Then
                                             disconnect()
                                         Else
                                             connect()
                                         End If
                                     End Sub
+        tsMenu(1) = New ToolStripMenuItem(EXIT_MENU_TEXT)
+        AddHandler tsMenu(1).Click, Sub() Application.Exit()
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
     End Sub
@@ -57,9 +57,9 @@ Public Class Form1
             icon_NI.ContextMenuStrip.Invoke(New SafechangeConnectMenuText(AddressOf changeConnectMenuText))
         End If
         If mHasConnection Then
-            icon_NI.ContextMenuStrip.Items.Item(1).Text = DISCONNECT_MENU_TEXT
+            icon_NI.ContextMenuStrip.Items.Item(0).Text = DISCONNECT_MENU_TEXT
         Else
-            icon_NI.ContextMenuStrip.Items.Item(1).Text = CONNECT_MENU_TEXT
+            icon_NI.ContextMenuStrip.Items.Item(0).Text = CONNECT_MENU_TEXT
         End If
     End Sub
 
