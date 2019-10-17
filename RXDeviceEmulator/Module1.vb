@@ -14,7 +14,7 @@ Module Module1
     Private mPort As IO.Ports.SerialPort
     Private mLock As New Object()
     Private mWorking As Boolean = False
-    Private mTWorking As Threading.Thread, mConListener As Threading.Thread, mComListener As Threading.Thread
+    Private mTWorking As Threading.Thread, mConListener As Threading.Thread
     Private mEWH As New Threading.EventWaitHandle(False, Threading.EventResetMode.AutoReset)
 
     Sub Main()
@@ -23,6 +23,7 @@ Module Module1
         mPort.ReadTimeout = -1
         mPort.ReceivedBytesThreshold = 1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
+        AddHandler mPort.DataReceived, AddressOf rebootComPortListener
         mPort.Open()
         Do
             start()
@@ -41,10 +42,6 @@ Module Module1
         If mTWorking IsNot Nothing AndAlso mTWorking.IsAlive Then
             Console.WriteLine("wait mTWorking")
             mTWorking.Join()
-        End If
-        If mComListener IsNot Nothing AndAlso mComListener.IsAlive Then
-            Console.WriteLine("wait mComListener")
-            mComListener.Join()
         End If
         Console.WriteLine("ready")
         mPort.Open()
@@ -68,9 +65,6 @@ Module Module1
         Console.WriteLine("Echo:")
         mConListener = New Threading.Thread(New Threading.ThreadStart(AddressOf consoleListener))
         mConListener.Start()
-        mComListener = New Threading.Thread(New Threading.ThreadStart(AddressOf rebootComPortSetListener))
-        mComListener.IsBackground = True
-        mComListener.Start()
     End Sub
 
     Private Sub consoleListener()
@@ -89,9 +83,6 @@ Module Module1
             If Not mWorking Then Exit Do
         Loop
     End Sub
-    Private Sub rebootComPortSetListener()
-        AddHandler mPort.DataReceived, AddressOf rebootComPortListener
-    End Sub
     Private Sub rebootComPortListener(sender As Object, e As IO.Ports.SerialDataReceivedEventArgs)
         If mWorking Then
             Dim buff(0) As Char
@@ -101,8 +92,7 @@ Module Module1
             If buff(0) = COMMAND_DISCONNECT Then
                 mWorking = False
                 mDataReceived = False
-                RemoveHandler mPort.DataReceived, AddressOf rebootComPortListener
-                mEWH.Set()
+                start()
             End If
         End If
     End Sub

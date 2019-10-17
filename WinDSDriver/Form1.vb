@@ -49,7 +49,11 @@ Public Class Form1
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
     End Sub
+    Private Delegate Sub SafechangeConnectMenuText()
     Private Sub changeConnectMenuText()
+        If icon_NI.ContextMenuStrip.InvokeRequired Then
+            icon_NI.ContextMenuStrip.Invoke(New SafechangeConnectMenuText(AddressOf changeConnectMenuText))
+        End If
         If mHasConnection Then
             icon_NI.ContextMenuStrip.Items.Item(1).Text = DISCONNECT_MENU_TEXT
         Else
