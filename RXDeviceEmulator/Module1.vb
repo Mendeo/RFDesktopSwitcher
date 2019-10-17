@@ -13,27 +13,41 @@ Module Module1
     Private mDataReceived As Boolean = False
     Private mPort As IO.Ports.SerialPort
     Private mLock As New Object()
-    Private Event NeedReboot()
-    Private mNeedReboot As Boolean = False
-    Dim mTWorking As Threading.Thread, mRebootComListener As Threading.Thread, mConListener As Threading.Thread
+    Private mWorking As Boolean = False
+    Private mTWorking As Threading.Thread, mConListener As Threading.Thread, mComListener As Threading.Thread
+    Private mEWH As New Threading.EventWaitHandle(False, Threading.EventResetMode.AutoReset)
 
     Sub Main()
         Console.Write("Port name: ")
         mPort = New IO.Ports.SerialPort(Console.ReadLine, 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
-        mPort.ReadTimeout = 100
+        mPort.ReadTimeout = -1
         mPort.ReceivedBytesThreshold = 1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
-        AddHandler NeedReboot, AddressOf start
         mPort.Open()
-        start()
+        Do
+            start()
+            mEWH.WaitOne()
+        Loop
     End Sub
 
     Private Sub start()
-        Console.WriteLine("start")
-        If mTWorking IsNot Nothing AndAlso mTWorking.IsAlive Then mTWorking.Join()
-        If mRebootComListener IsNot Nothing AndAlso mRebootComListener.IsAlive Then mRebootComListener.Join()
-        If mConListener IsNot Nothing AndAlso mConListener.IsAlive Then mConListener.Abort()
+        mPort.Close()
+        Console.WriteLine("start " & Threading.Thread.CurrentThread.ManagedThreadId)
+        If mConListener IsNot Nothing AndAlso mConListener.IsAlive Then
+            mConListener.Abort()
+            Console.WriteLine("wait mConListener")
+            'mConListener.Join()
+        End If
+        If mTWorking IsNot Nothing AndAlso mTWorking.IsAlive Then
+            Console.WriteLine("wait mTWorking")
+            mTWorking.Join()
+        End If
+        If mComListener IsNot Nothing AndAlso mComListener.IsAlive Then
+            Console.WriteLine("wait mComListener")
+            mComListener.Join()
+        End If
         Console.WriteLine("ready")
+        mPort.Open()
         Dim buff(0) As Char
         Do
             If mDataReceived Then
@@ -46,54 +60,59 @@ Module Module1
             mPort.Write(COMMAND_READY)
             Threading.Thread.Sleep(SCAN_TIMEOUT)
         Loop
-        mNeedReboot = False
+
+        mWorking = True
         mTWorking = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
+        mTWorking.IsBackground = True
         mTWorking.Start()
         Console.WriteLine("Echo:")
-        mRebootComListener = New Threading.Thread(New Threading.ThreadStart(AddressOf rebootComPortListener))
-        mRebootComListener.Start()
         mConListener = New Threading.Thread(New Threading.ThreadStart(AddressOf consoleListener))
         mConListener.Start()
+        mComListener = New Threading.Thread(New Threading.ThreadStart(AddressOf rebootComPortSetListener))
+        mComListener.IsBackground = True
+        mComListener.Start()
     End Sub
 
     Private Sub consoleListener()
         Do
             Dim str As String = Console.ReadLine
             If str.Equals("reboot") Then
-                mNeedReboot = True
-                RaiseEvent NeedReboot()
+                mWorking = False
+                mEWH.Set() 'Запускаем start в главном потоке.
                 Exit Do
-            ElseIf Not mNeedReboot Then
-                SyncLock mLock
-                    mPort.Write(str)
-                End SyncLock
+            ElseIf mWorking Then
+                'SyncLock mLock
+                mPort.Write(str)
+                Console.WriteLine("Ok!")
+                'End SyncLock
             End If
-            If mNeedReboot Then Exit Do
+            If Not mWorking Then Exit Do
         Loop
     End Sub
-    Private Sub rebootComPortListener()
-        Dim buff(0) As Char
-        Do
-            Try
-                mPort.Read(buff, 0, 1)
-            Catch ex As Exception
-
-            End Try
+    Private Sub rebootComPortSetListener()
+        AddHandler mPort.DataReceived, AddressOf rebootComPortListener
+    End Sub
+    Private Sub rebootComPortListener(sender As Object, e As IO.Ports.SerialDataReceivedEventArgs)
+        If mWorking Then
+            Dim buff(0) As Char
+            'SyncLock mLock
+            mPort.Read(buff, 0, 1)
+            'End SyncLock
             If buff(0) = COMMAND_DISCONNECT Then
-                mNeedReboot = True
-                RaiseEvent NeedReboot()
-                Exit Do
+                mWorking = False
+                mDataReceived = False
+                RemoveHandler mPort.DataReceived, AddressOf rebootComPortListener
+                mEWH.Set()
             End If
-            If mNeedReboot Then Exit Do
-        Loop
+        End If
     End Sub
     Private Sub working()
         Do
-            SyncLock mLock
-                mPort.Write(COMMAND_IN_WORK)
-            End SyncLock
+            'SyncLock mLock
+            mPort.Write(COMMAND_IN_WORK)
+            'End SyncLock
             Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
-            If mNeedReboot Then Exit Do
+            If Not mWorking Then Exit Do
         Loop
     End Sub
 End Module
