@@ -35,12 +35,10 @@ Module Module1
 
     Private Sub start()
         mPort.ReadExisting() 'Очищаем буфер порта
-        Console.WriteLine("start " & Threading.Thread.CurrentThread.ManagedThreadId)
         If mTWorking IsNot Nothing AndAlso mTWorking.IsAlive Then
-            Console.WriteLine("wait mTWorking")
             mTWorking.Join()
         End If
-        Console.WriteLine("ready")
+        Console.WriteLine("no connection")
         Dim buff(0) As Char
         Do
             If mDataReceived Then
@@ -53,7 +51,7 @@ Module Module1
             mPort.Write(COMMAND_READY)
             Threading.Thread.Sleep(SCAN_TIMEOUT)
         Loop
-
+        Console.WriteLine("connect!")
         mWorking = True
         mTWorking = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
         mTWorking.IsBackground = True
@@ -68,7 +66,6 @@ Module Module1
                 mEWH.Set() 'Запускаем start в главном потоке.
             Else
                 mPort.Write(str)
-                Console.WriteLine("Ok!")
             End If
         Loop
     End Sub
