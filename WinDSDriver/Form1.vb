@@ -64,6 +64,7 @@ Public Class Form1
     End Sub
 
     Public Sub disconnect()
+        If Not mHasConnection Then Return
         If RefreshWatch.IsHandleCreated Then showRefreshWatching(False)
         mHasConnection = False
         mWorkingThread.Join()
@@ -74,6 +75,7 @@ Public Class Form1
     End Sub
 
     Private Sub connect()
+        If mHasConnection Then Return
         Dim buff(0) As Char
         mHasConnection = False
         Watching = True
@@ -82,6 +84,7 @@ Public Class Form1
             devPort.PortName = sp
             Try
                 devPort.Open()
+                devPort.ReadExisting() 'Очищаем буфер com порта от старых данных и мусора, что возможно пришло.
                 devPort.Read(buff, 0, 1)
             Catch ex As Exception
                 buff(0) = vbNullChar.Chars(0)
@@ -125,7 +128,9 @@ Public Class Form1
             If isShow Then
                 RefreshWatch.Show()
             Else
+                RefreshWatch.InternalClose = True
                 RefreshWatch.Close()
+                RefreshWatch.InternalClose = False
             End If
         End If
     End Sub
@@ -176,6 +181,10 @@ Public Class Form1
             End If
             If Not mHasConnection Then Exit Do
         Loop
+    End Sub
+
+    Private Sub Form1_FormClosed(sender As Object, e As FormClosedEventArgs) Handles Me.FormClosed
+        'disconnect()
     End Sub
 
     Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
