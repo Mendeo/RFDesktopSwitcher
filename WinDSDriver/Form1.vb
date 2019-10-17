@@ -64,6 +64,7 @@ Public Class Form1
     End Sub
 
     Public Sub disconnect()
+        If RefreshWatch.IsHandleCreated Then showRefreshWatching(False)
         mHasConnection = False
         mWorkingThread.Join()
         devPort.Write(COMMAND_DISCONNECT)
@@ -75,6 +76,7 @@ Public Class Form1
     Private Sub connect()
         Dim buff(0) As Char
         mHasConnection = False
+        Watching = True
         devPort.ReadTimeout = SCAN_TIMEOUT
         For Each sp As String In My.Computer.Ports.SerialPortNames
             devPort.PortName = sp
@@ -114,17 +116,24 @@ Public Class Form1
         keybd_event(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
     End Sub
 
-    Private Delegate Sub SafeShowRefreshWatching()
+    Private Delegate Sub SafeShowRefreshWatching(isShow As Boolean)
 
-    Private Sub showRefreshWatching()
-        RefreshWatch.Show()
+    Private Sub showRefreshWatching(isShow As Boolean)
+        If Me.InvokeRequired Then
+            Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching), {isShow})
+        Else
+            If isShow Then
+                RefreshWatch.Show()
+            Else
+                RefreshWatch.Close()
+            End If
+        End If
     End Sub
 
     Private Sub onFire()
-        'log("Fire!")
         If Watching Then
             Watching = False
-            Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching))
+            showRefreshWatching(True)
             switchDesktop()
         End If
     End Sub
@@ -158,6 +167,7 @@ Public Class Form1
                     onFire()
                 Else
                     log("От устройства пришли неожиданные данные: " & buff(0))
+                    devPort.Write(COMMAND_DISCONNECT) 'на всякий случай посылаем команду перезагрузиться устройству.
                     devPort.Close()
                     mHasConnection = False
                     changeConnectMenuText()

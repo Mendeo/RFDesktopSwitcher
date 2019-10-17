@@ -53,6 +53,7 @@ Partial Class RefreshWatch
         Me.Controls.Add(Me.refreshWatching_BT)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow
         Me.Name = "RefreshWatch"
+        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Desktop Switcher"
         Me.ResumeLayout(False)
 
