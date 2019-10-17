@@ -124,7 +124,7 @@ Public Class Form1
         'log("Fire!")
         If Watching Then
             Watching = False
-            RefreshWatch.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching))
+            Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching))
             switchDesktop()
         End If
     End Sub
