@@ -66,7 +66,6 @@ Module Module1
             If str.Equals("reboot") AndAlso mWorking Then
                 mWorking = False
                 mEWH.Set() 'Запускаем start в главном потоке.
-                Exit Do
             Else
                 mPort.Write(str)
                 Console.WriteLine("Ok!")

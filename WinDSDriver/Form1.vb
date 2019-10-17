@@ -11,7 +11,7 @@ Public Class Form1
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
-    Private mWatching As Boolean = True
+    Public Property Watching As Boolean = True
 
     Private Const VK_LCONTROL As Byte = &HA2
     Private Const VK_LWIN As Byte = &H5B
@@ -49,7 +49,9 @@ Public Class Form1
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
     End Sub
+
     Private Delegate Sub SafechangeConnectMenuText()
+
     Private Sub changeConnectMenuText()
         If icon_NI.ContextMenuStrip.InvokeRequired Then
             icon_NI.ContextMenuStrip.Invoke(New SafechangeConnectMenuText(AddressOf changeConnectMenuText))
@@ -60,7 +62,8 @@ Public Class Form1
             icon_NI.ContextMenuStrip.Items.Item(1).Text = CONNECT_MENU_TEXT
         End If
     End Sub
-    Private Sub disconnect()
+
+    Public Sub disconnect()
         mHasConnection = False
         mWorkingThread.Join()
         devPort.Write(COMMAND_DISCONNECT)
@@ -68,6 +71,7 @@ Public Class Form1
         log("Соединение сброшено")
         changeConnectMenuText()
     End Sub
+
     Private Sub connect()
         Dim buff(0) As Char
         mHasConnection = False
@@ -95,14 +99,10 @@ Public Class Form1
         changeConnectMenuText()
         devPort.Write(COMMAND_ANSWER)
         Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
-        'Читаем порт, проверяем, что устройство подключено.
         devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
         mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
         mWorkingThread.IsBackground = True
         mWorkingThread.Start()
-    End Sub
-    Private Sub Bt_Click(sender As Object, e As EventArgs) Handles Button1.Click
-
     End Sub
 
     Private Sub switchDesktop()
@@ -114,11 +114,18 @@ Public Class Form1
         keybd_event(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
     End Sub
 
+    Private Delegate Sub SafeShowRefreshWatching()
+
+    Private Sub showRefreshWatching()
+        RefreshWatch.Show()
+    End Sub
+
     Private Sub onFire()
-        log("Fire!")
-        If mWatching Then
+        'log("Fire!")
+        If Watching Then
+            Watching = False
+            RefreshWatch.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching))
             switchDesktop()
-            mWatching = False
         End If
     End Sub
 
@@ -162,8 +169,4 @@ Public Class Form1
     End Sub
 
     Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
-
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-        mWatching = True
-    End Sub
 End Class
