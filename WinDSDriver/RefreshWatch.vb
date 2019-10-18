@@ -2,23 +2,22 @@
     Private mSomeButtonClicked As Boolean = False
     Public Shared InternalClose As Boolean = False
     Public Shared IsShown As Boolean = False
-    Public Event RefreshWatchingEvent()
+    Public Shared Event RefreshWatchingEvent()
+    Public Shared Event DisconnectEvent()
 
     Private Sub refreshWatching_BT_Click(sender As Object, e As EventArgs) Handles refreshWatching_BT.Click
         RaiseEvent RefreshWatchingEvent()
         mSomeButtonClicked = True
-        Me.Close()
     End Sub
 
     Private Sub disconnect_BT_Click(sender As Object, e As EventArgs) Handles disconnect_BT.Click
-        MainForm.disconnect()
+        RaiseEvent DisconnectEvent()
         mSomeButtonClicked = True
-        Me.Close()
     End Sub
 
     Private Sub RefreshWatch_FormClosed(sender As Object, e As FormClosedEventArgs) Handles Me.FormClosed
         If Not mSomeButtonClicked AndAlso Not InternalClose Then
-            MainForm.disconnect()
+            RaiseEvent DisconnectEvent()
         End If
         IsShown = False
     End Sub

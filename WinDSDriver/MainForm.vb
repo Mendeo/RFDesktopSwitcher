@@ -27,8 +27,10 @@ Public Class MainForm
                                                           If mHasConnection Then
                                                               mWatching = True
                                                               icon_NI.Icon = My.Resources.green
+                                                              showRefreshWatching(False)
                                                           End If
                                                       End Sub
+        AddHandler RefreshWatch.DisconnectEvent, Sub() disconnect()
         Dim cms = New ContextMenuStrip()
         Dim tsMenu(1) As ToolStripMenuItem
         tsMenu(0) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
@@ -59,7 +61,7 @@ Public Class MainForm
         End If
     End Sub
 
-    Public Sub disconnect()
+    Private Sub disconnect()
         If Not mHasConnection Then Return
         showRefreshWatching(False)
         mHasConnection = False
