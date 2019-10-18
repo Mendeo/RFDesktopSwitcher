@@ -1,7 +1,7 @@
 ﻿Option Explicit On
 Option Strict On
 
-Public Class MainClass
+Public Class MainForm
     Private Const COMMAND_READY As Char = "r"c
     Private Const COMMAND_IN_WORK As Char = "w"c
     Private Const COMMAND_ANSWER As Char = "o"c
@@ -22,10 +22,7 @@ Public Class MainClass
     Private Const DISCONNECT_MENU_TEXT As String = "Разъединить"
     Private Const EXIT_MENU_TEXT As String = "Выход"
 
-    Private icon_NI As New NotifyIcon()
-    Private devPort As New IO.Ports.SerialPort(String.Empty, 115200, IO.Ports.Parity.None, 8, IO.Ports.StopBits.One)
-
-    Public Sub Main()
+    Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Dim cms = New ContextMenuStrip()
         Dim tsMenu(1) As ToolStripMenuItem
         tsMenu(0) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
@@ -40,8 +37,6 @@ Public Class MainClass
         AddHandler tsMenu(1).Click, Sub() Application.Exit()
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
-        'Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager()
-        icon_NI.Icon = New Icon(IO.Path.Combine(My.Application.Info.DirectoryPath, "icon.ico"))
     End Sub
 
     Private Delegate Sub SafechangeConnectMenuText()
@@ -116,17 +111,17 @@ Public Class MainClass
     Private Delegate Sub SafeShowRefreshWatching(isShow As Boolean)
 
     Private Sub showRefreshWatching(isShow As Boolean)
-        'If Me.InvokeRequired Then
-        '    Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching), {isShow})
-        'Else
-        If isShow Then
-            RefreshWatch.Show()
+        If Me.InvokeRequired Then
+            Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching), {isShow})
         Else
-            RefreshWatch.InternalClose = True
-            RefreshWatch.Close()
-            RefreshWatch.InternalClose = False
+            If isShow Then
+                RefreshWatch.Show()
+            Else
+                RefreshWatch.InternalClose = True
+                RefreshWatch.Close()
+                RefreshWatch.InternalClose = False
+            End If
         End If
-        'End If
     End Sub
 
     Private Sub onFire()
@@ -169,6 +164,14 @@ Public Class MainClass
             End If
             If Not mHasConnection Then Exit Do
         Loop
+    End Sub
+
+    Private Sub MainForm_FormClosed(sender As Object, e As FormClosedEventArgs) Handles Me.FormClosed
+        disconnect()
+    End Sub
+
+    Private Sub MainForm_Paint(sender As Object, e As PaintEventArgs) Handles Me.Paint
+        Me.Hide()
     End Sub
 
     Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)

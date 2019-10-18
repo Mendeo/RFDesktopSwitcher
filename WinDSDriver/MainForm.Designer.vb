@@ -1,5 +1,5 @@
 ﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class Form1
+Partial Class MainForm
     Inherits System.Windows.Forms.Form
 
     'Форма переопределяет dispose для очистки списка компонентов.
@@ -23,7 +23,7 @@ Partial Class Form1
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form1))
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainForm))
         Me.devPort = New System.IO.Ports.SerialPort(Me.components)
         Me.icon_NI = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.SuspendLayout()
@@ -36,7 +36,7 @@ Partial Class Form1
         'icon_NI
         '
         Me.icon_NI.Icon = CType(resources.GetObject("icon_NI.Icon"), System.Drawing.Icon)
-        Me.icon_NI.Text = "NotifyIcon1"
+        Me.icon_NI.Text = "Desktop Switcher"
         Me.icon_NI.Visible = True
         '
         'Form1
