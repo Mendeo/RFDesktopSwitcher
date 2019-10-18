@@ -59,7 +59,7 @@ Public Class MainForm
         mWorkingThread.Join()
         devPort.Write(COMMAND_DISCONNECT)
         devPort.Close()
-        log("Соединение сброшено")
+        log("Соединение сброшено", ToolTipIcon.Info)
         changeConnectMenuText()
     End Sub
 
@@ -85,11 +85,11 @@ Public Class MainForm
             devPort.Close()
         Next
         If Not mHasConnection Then
-            log("Устройство не найдено.")
+            log("Устройство не найдено.", ToolTipIcon.Warning)
             changeConnectMenuText()
             Return
         End If
-        log("Соединение установлено (" & devPort.PortName & ")")
+        log("Соединение установлено (" & devPort.PortName & ")", ToolTipIcon.Info)
         changeConnectMenuText()
         devPort.Write(COMMAND_ANSWER)
         Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
@@ -132,10 +132,10 @@ Public Class MainForm
         End If
     End Sub
 
-    Private Delegate Sub SafeLog(m As String)
+    Private Delegate Sub SafeLog(m As String, toolTipIcon As ToolTipIcon)
 
-    Private Sub log(m As String)
-        icon_NI.ShowBalloonTip(1000, "", m, ToolTipIcon.Info)
+    Private Sub log(m As String, toolTipIcon As ToolTipIcon)
+        icon_NI.ShowBalloonTip(1000, "", m, toolTipIcon)
     End Sub
 
     Private Sub working()
@@ -144,7 +144,7 @@ Public Class MainForm
             Try
                 devPort.Read(buff, 0, 1)
             Catch ex As Exception
-                log("Устройство перестало отвечать.")
+                log("Устройство перестало отвечать.", ToolTipIcon.Warning)
                 devPort.Close()
                 mHasConnection = False
                 changeConnectMenuText()
@@ -154,7 +154,7 @@ Public Class MainForm
                 If buff(0) = COMMAND_FIRE Then
                     onFire()
                 Else
-                    log("От устройства пришли неожиданные данные: " & buff(0))
+                    log("От устройства пришли неожиданные данные: " & buff(0), ToolTipIcon.Error)
                     devPort.Write(COMMAND_DISCONNECT) 'на всякий случай посылаем команду перезагрузиться устройству.
                     devPort.Close()
                     mHasConnection = False
