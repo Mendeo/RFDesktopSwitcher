@@ -11,7 +11,7 @@ Public Class MainForm
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
-    Public Property Watching As Boolean = True
+    Private mWatching As Boolean = True
 
     Private Const VK_LCONTROL As Byte = &HA2
     Private Const VK_LWIN As Byte = &H5B
@@ -23,6 +23,12 @@ Public Class MainForm
     Private Const EXIT_MENU_TEXT As String = "Выход"
 
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        AddHandler RefreshWatch.RefreshWatchingEvent, Sub()
+                                                          If mHasConnection Then
+                                                              mWatching = True
+                                                              icon_NI.Icon = My.Resources.green
+                                                          End If
+                                                      End Sub
         Dim cms = New ContextMenuStrip()
         Dim tsMenu(1) As ToolStripMenuItem
         tsMenu(0) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
@@ -37,6 +43,7 @@ Public Class MainForm
         AddHandler tsMenu(1).Click, Sub() Application.Exit()
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
+        icon_NI.Icon = My.Resources.red
     End Sub
 
     Private Delegate Sub SafechangeConnectMenuText()
@@ -54,20 +61,21 @@ Public Class MainForm
 
     Public Sub disconnect()
         If Not mHasConnection Then Return
-        If RefreshWatch.IsHandleCreated Then showRefreshWatching(False)
+        showRefreshWatching(False)
         mHasConnection = False
         mWorkingThread.Join()
         devPort.Write(COMMAND_DISCONNECT)
         devPort.Close()
         log("Соединение сброшено", ToolTipIcon.Info)
         changeConnectMenuText()
+        icon_NI.Icon = My.Resources.red
     End Sub
 
     Private Sub connect()
         If mHasConnection Then Return
         Dim buff(0) As Char
         mHasConnection = False
-        Watching = True
+        mWatching = True
         devPort.ReadTimeout = SCAN_TIMEOUT
         For Each sp As String In My.Computer.Ports.SerialPortNames
             devPort.PortName = sp
@@ -97,6 +105,7 @@ Public Class MainForm
         mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
         mWorkingThread.IsBackground = True
         mWorkingThread.Start()
+        icon_NI.Icon = My.Resources.green
     End Sub
 
     Private Sub switchDesktop()
@@ -111,6 +120,7 @@ Public Class MainForm
     Private Delegate Sub SafeShowRefreshWatching(isShow As Boolean)
 
     Private Sub showRefreshWatching(isShow As Boolean)
+        If RefreshWatch.IsShown = isShow Then Return
         If Me.InvokeRequired Then
             Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching), {isShow})
         Else
@@ -125,10 +135,11 @@ Public Class MainForm
     End Sub
 
     Private Sub onFire()
-        If Watching Then
-            Watching = False
+        If mWatching Then
+            mWatching = False
             showRefreshWatching(True)
             switchDesktop()
+            icon_NI.Icon = My.Resources.yellow
         End If
     End Sub
 
@@ -145,9 +156,11 @@ Public Class MainForm
                 devPort.Read(buff, 0, 1)
             Catch ex As Exception
                 log("Устройство перестало отвечать.", ToolTipIcon.Warning)
+                showRefreshWatching(False)
                 devPort.Close()
                 mHasConnection = False
                 changeConnectMenuText()
+                icon_NI.Icon = My.Resources.red
                 Return
             End Try
             If Not buff(0) = COMMAND_IN_WORK Then
@@ -155,10 +168,12 @@ Public Class MainForm
                     onFire()
                 Else
                     log("От устройства пришли неожиданные данные: " & buff(0), ToolTipIcon.Error)
+                    showRefreshWatching(False)
                     devPort.Write(COMMAND_DISCONNECT) 'на всякий случай посылаем команду перезагрузиться устройству.
                     devPort.Close()
                     mHasConnection = False
                     changeConnectMenuText()
+                    icon_NI.Icon = My.Resources.red
                     Return
                 End If
             End If

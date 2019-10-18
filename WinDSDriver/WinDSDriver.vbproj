@@ -128,5 +128,14 @@
     </None>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\red.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\green.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\yellow.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>
