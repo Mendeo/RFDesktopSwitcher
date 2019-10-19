@@ -1,4 +1,4 @@
-#define RX_PIN 7
+#define RX_PIN 2
 #define ERROR_VALUE 2
 #define COMMAND_READY 'r'
 #define COMMAND_IN_WORK 'w'
@@ -11,14 +11,40 @@
 const uint8_t RX_DATA[] = {12, 43, 29, 42, 24};
 unsigned long _sysTime;
 unsigned long _lastInWorkSend = 0;
-uint8_t _rxCounter = 0;
+unsigned long _lastFireSend = 0;
 bool _isReadyStatus = true;
 
+volatile unsigned long _RXCurrentTime = 0;
+volatile unsigned long _RXPreviousTime = 0;
+volatile unsigned long _pulseDuration = 0;
+volatile uint8_t _rxCounter = 0;
+volatile bool _isFire = false;
 
 void setup()
 {
   pinMode(RX_PIN, INPUT);
   Serial.begin(115200);
+  attachInterrupt(digitalPinToInterrupt(RX_PIN), onPulse, CHANGE);
+}
+
+void onPulse()
+{
+  _RXCurrentTime = millis();
+  _pulseDuration = _RXCurrentTime - _RXPreviousTime;
+  _RXPreviousTime = _RXCurrentTime;
+  if ((digitalRead(RX_PIN) ^ _rxCounter % 2 == 0) && _pulseDuration >= RX_DATA[_rxCounter] - ERROR_VALUE && _pulseDuration <= RX_DATA[_rxCounter] + ERROR_VALUE)
+  {
+    _rxCounter++;
+  }
+  else
+  {
+    _rxCounter = 0;
+  }
+  if (_rxCounter == sizeof(RX_DATA))
+  {
+    _isFire = true;
+    _rxCounter = 0;
+  }
 }
 
 void loop()
@@ -42,53 +68,24 @@ void loop()
     }
   }
   _sysTime = millis();
-  //Расшифровка данных от приёмника.
-  if (_rxCounter % 2 == 0)
+  //Отправка символа работы.
+  if (_sysTime - _lastInWorkSend >= CHECK_DEVICE_TIMEOUT)
   {
-    waiter(digitalRead(RX_PIN));
+    _lastInWorkSend = _sysTime;
+    Serial.write(COMMAND_IN_WORK);
   }
-  else
+  //Если пришло сообщение разъединиться.
+  if (Serial.available())
   {
-    waiter(!digitalRead(RX_PIN));
+    if (Serial.read() == COMMAND_DISCONNECT)
+    {
+      Serial.flush();
+      _isReadyStatus = true;
+    }
   }
-  unsigned int len = millis() - _sysTime;
-  if (len >= RX_DATA[_rxCounter] - ERROR_VALUE && len <= RX_DATA[_rxCounter] + ERROR_VALUE)
+  if (_isFire)
   {
-    _rxCounter++;
-  }
-  else
-  {
-    _rxCounter = 0;
-  }
-  if (_rxCounter == sizeof(RX_DATA))
-  {
+    _isFire = false;
     Serial.write(COMMAND_FIRE);
-    _rxCounter = 0;
-  }
-}
-
- //Ожидаем пока работает заданное условие, при этом посылаем в консоль сообщения, что мы ещё на связи.
-void waiter(bool condition)
-{
-  unsigned long _curTime;
-  while (condition)
-  {
-    //Отправка символа работы.
-    _curTime = millis();
-    if (_curTime - _lastInWorkSend >= CHECK_DEVICE_TIMEOUT)
-    {
-      _lastInWorkSend = _curTime;
-      Serial.write(COMMAND_IN_WORK);
-    }
-    //Если пришло сообщение разъединиться.
-    if (Serial.available())
-    {
-      if (Serial.read() == COMMAND_DISCONNECT)
-      {
-        Serial.flush();
-        _isReadyStatus = true;
-        break;
-      }
-    }
   }
 }
