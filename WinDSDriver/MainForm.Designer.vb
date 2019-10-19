@@ -26,6 +26,7 @@ Partial Class MainForm
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainForm))
         Me.devPort = New System.IO.Ports.SerialPort(Me.components)
         Me.icon_NI = New System.Windows.Forms.NotifyIcon(Me.components)
+        Me.logoTimer = New System.Windows.Forms.Timer(Me.components)
         Me.SuspendLayout()
         '
         'devPort
@@ -39,16 +40,23 @@ Partial Class MainForm
         Me.icon_NI.Text = "Desktop Switcher"
         Me.icon_NI.Visible = True
         '
-        'Form1
+        'logoTimer
+        '
+        Me.logoTimer.Interval = 3000
+        '
+        'MainForm
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(120, 0)
+        Me.BackgroundImage = Global.WinDSDriver.My.Resources.Resources.Logo
+        Me.ClientSize = New System.Drawing.Size(475, 175)
+        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
         Me.MaximizeBox = False
         Me.MinimizeBox = False
-        Me.Name = "Form1"
+        Me.Name = "MainForm"
         Me.ShowIcon = False
         Me.ShowInTaskbar = False
+        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Desktop Switcher"
         Me.ResumeLayout(False)
 
@@ -56,4 +64,5 @@ Partial Class MainForm
 
     Friend WithEvents devPort As IO.Ports.SerialPort
     Friend WithEvents icon_NI As NotifyIcon
+    Friend WithEvents logoTimer As Timer
 End Class

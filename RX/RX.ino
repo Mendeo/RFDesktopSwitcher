@@ -80,6 +80,7 @@ void waiter(bool condition)
       _lastInWorkSend = _curTime;
       Serial.write(COMMAND_IN_WORK);
     }
+    //Если пришло сообщение разъединиться.
     if (Serial.available())
     {
       if (Serial.read() == COMMAND_DISCONNECT)

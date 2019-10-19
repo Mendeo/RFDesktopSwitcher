@@ -46,6 +46,7 @@ Public Class MainForm
         cms.Items.AddRange(tsMenu)
         icon_NI.ContextMenuStrip = cms
         icon_NI.Icon = My.Resources.red
+        Me.TransparencyKey = BackColor
     End Sub
 
     Private Delegate Sub SafechangeConnectMenuText()
@@ -188,7 +189,12 @@ Public Class MainForm
     End Sub
 
     Private Sub MainForm_Paint(sender As Object, e As PaintEventArgs) Handles Me.Paint
+        logoTimer.Start()
+    End Sub
+
+    Private Sub logoTimer_Tick(sender As Object, e As EventArgs) Handles logoTimer.Tick
         Me.Hide()
+        logoTimer.Stop()
     End Sub
 
     Declare Auto Sub keybd_event Lib "user32" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Integer, ByVal dwExtraInfo As Integer)
