@@ -55,6 +55,7 @@ Partial Class RefreshWatch
         Me.Name = "RefreshWatch"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Desktop Switcher"
+        Me.TopMost = True
         Me.ResumeLayout(False)
 
     End Sub
