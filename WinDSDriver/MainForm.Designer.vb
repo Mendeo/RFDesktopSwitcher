@@ -51,6 +51,7 @@ Partial Class MainForm
         Me.BackgroundImage = Global.WinDSDriver.My.Resources.Resources.Logo
         Me.ClientSize = New System.Drawing.Size(475, 175)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "MainForm"

@@ -22,6 +22,7 @@ Partial Class RefreshWatch
     'Не изменяйте ее в редакторе исходного кода.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(RefreshWatch))
         Me.refreshWatching_BT = New System.Windows.Forms.Button()
         Me.disconnect_BT = New System.Windows.Forms.Button()
         Me.SuspendLayout()
@@ -52,6 +53,7 @@ Partial Class RefreshWatch
         Me.Controls.Add(Me.disconnect_BT)
         Me.Controls.Add(Me.refreshWatching_BT)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Name = "RefreshWatch"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Desktop Switcher"
