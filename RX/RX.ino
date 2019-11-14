@@ -34,7 +34,7 @@ void onPulse()
   _RXCurrentTime = millis();
   _pulseDuration = _RXCurrentTime - _RXPreviousTime;
   _RXPreviousTime = _RXCurrentTime;
-  if ((digitalRead(RX_PIN) ^ _rxCounter % 2 == 0) && _pulseDuration >= RX_DATA[_rxCounter] - ERROR_VALUE && _pulseDuration <= RX_DATA[_rxCounter] + ERROR_VALUE)
+  if (!(digitalRead(RX_PIN) ^ (_rxCounter % 2)) && _pulseDuration >= RX_DATA[_rxCounter] - ERROR_VALUE && _pulseDuration <= RX_DATA[_rxCounter] + ERROR_VALUE)
   {
     _rxCounter++;
   }
