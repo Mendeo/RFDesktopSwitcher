@@ -23,7 +23,7 @@
         RaiseEvent OnClosedEvent()
     End Sub
 
-    Private Sub RefreshWatch_Paint(sender As Object, e As PaintEventArgs) Handles Me.Paint
+    Private Sub RefreshWatch_Shown(sender As Object, e As EventArgs) Handles Me.Shown
         RaiseEvent OnShownEvent()
     End Sub
 End Class
