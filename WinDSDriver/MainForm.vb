@@ -127,6 +127,7 @@ Public Class MainForm
         keybd_event(VK_LCONTROL, 0, 0, 0)
         keybd_event(VK_LWIN, 0, 0, 0)
         keybd_event(VK_RIGHT, 0, 0, 0)
+        Threading.Thread.Sleep(100)
         keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
         keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0)
         keybd_event(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
