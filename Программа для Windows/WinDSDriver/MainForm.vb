@@ -125,11 +125,15 @@ Public Class MainForm
 
     Private Sub switchDesktop()
         keybd_event(VK_LCONTROL, 0, 0, 0)
+        Threading.Thread.Sleep(20)
         keybd_event(VK_LWIN, 0, 0, 0)
+        Threading.Thread.Sleep(20)
         keybd_event(VK_RIGHT, 0, 0, 0)
-        Threading.Thread.Sleep(100)
+        Threading.Thread.Sleep(300)
         keybd_event(VK_RIGHT, 0, KEYEVENTF_KEYUP, 0)
+        Threading.Thread.Sleep(20)
         keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0)
+        Threading.Thread.Sleep(20)
         keybd_event(VK_LCONTROL, 0, KEYEVENTF_KEYUP, 0)
     End Sub
 
