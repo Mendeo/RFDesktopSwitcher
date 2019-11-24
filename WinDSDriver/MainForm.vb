@@ -22,6 +22,9 @@ Public Class MainForm
     Private Const DISCONNECT_MENU_TEXT As String = "Разъединить"
     Private Const EXIT_MENU_TEXT As String = "Выход"
 
+    Private mIsRefreshWatchFormShown As Boolean
+    Private mMakeFire As Boolean = False
+
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         AddHandler RefreshWatch.RefreshWatchingEvent, Sub()
                                                           If mHasConnection Then
@@ -31,6 +34,15 @@ Public Class MainForm
                                                           End If
                                                       End Sub
         AddHandler RefreshWatch.DisconnectEvent, Sub() disconnect()
+        AddHandler RefreshWatch.OnShownEvent, Sub()
+                                                  If mMakeFire Then
+                                                      mMakeFire = False
+                                                      mIsRefreshWatchFormShown = True
+                                                      switchDesktop()
+                                                      icon_NI.Icon = My.Resources.yellow
+                                                  End If
+                                              End Sub
+        AddHandler RefreshWatch.OnClosedEvent, Sub() mIsRefreshWatchFormShown = False
         Dim cms = New ContextMenuStrip()
         Dim tsMenu(1) As ToolStripMenuItem
         tsMenu(0) = New ToolStripMenuItem(CONNECT_MENU_TEXT)
@@ -123,7 +135,7 @@ Public Class MainForm
     Private Delegate Sub SafeShowRefreshWatching(isShow As Boolean)
 
     Private Sub showRefreshWatching(isShow As Boolean)
-        If RefreshWatch.IsShown = isShow Then Return
+        If mIsRefreshWatchFormShown = isShow Then Return
         If Me.InvokeRequired Then
             Me.Invoke(New SafeShowRefreshWatching(AddressOf showRefreshWatching), {isShow})
         Else
@@ -140,9 +152,8 @@ Public Class MainForm
     Private Sub onFire()
         If mWatching Then
             mWatching = False
-            showRefreshWatching(True)
-            switchDesktop()
-            icon_NI.Icon = My.Resources.yellow
+            mMakeFire = True
+            showRefreshWatching(True) 'Когда окно запустится, только после этого переключим рабочий стол по событию RefreshWatch.OnShownEvent
         End If
     End Sub
 
