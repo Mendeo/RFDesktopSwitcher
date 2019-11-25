@@ -10,7 +10,7 @@ T = 1;
 
 HPin = 2.5;
 intPinRad = 0.8;
-arduinoThiknesToHole = 0.5;
+arduinoThiknesToHole = 1;
 
 hCapInt = T;
 hCapExt = T;
