@@ -5,8 +5,10 @@
 #define COMMAND_ANSWER 'o'
 #define COMMAND_FIRE 'f'
 #define COMMAND_DISCONNECT 'd'
+#define COMMAND_COMP_ALIVE 'a'
 #define SCAN_TIMEOUT 100
 #define CHECK_DEVICE_TIMEOUT 1000
+#define CHECK_COMP_ALIVE_TIMEOUT 1000
 #define PAUSE_TIME 8000
 
 const uint8_t RX_DATA[] = {12, 43, 29, 42, 24};
@@ -14,6 +16,7 @@ unsigned long _sysTime;
 unsigned long _lastInWorkSend = 0;
 unsigned long _lastFireSend = 0;
 unsigned long _startPauseTime = 0;
+unsigned long _lastCompAliveReceived = 0;
 bool _isReadyStatus = true;
 bool _needWaitPause = false;
 
@@ -69,6 +72,7 @@ void loop()
       Serial.write(COMMAND_READY);
       delay(SCAN_TIMEOUT);
     }
+    _lastCompAliveReceived = millis();
   }
   _sysTime = millis();
   //Отправка символа работы.
@@ -77,16 +81,21 @@ void loop()
     _lastInWorkSend = _sysTime;
     Serial.write(COMMAND_IN_WORK);
   }
-  //Если пришло сообщение разъединиться.
+  //Если пришло сообщение.
   if (Serial.available())
   {
-    if (Serial.read() == COMMAND_DISCONNECT)
+    char data = Serial.read();
+    Serial.flush();
+    if (data == COMMAND_DISCONNECT)
     {
-      Serial.flush();
-      detachInterrupt(digitalPinToInterrupt(RX_PIN));
-      _isReadyStatus = true;
+      disconnect();
+    }
+    else if (data == COMMAND_COMP_ALIVE)
+    {
+      _lastCompAliveReceived = _sysTime;
     }
   }
+  if (_sysTime - _lastCompAliveReceived > CHECK_COMP_ALIVE_TIMEOUT) disconnect();
   if (_isFire)
   {
     _isFire = false;
@@ -100,4 +109,10 @@ void loop()
     _needWaitPause = false;
     attachInterrupt(digitalPinToInterrupt(RX_PIN), onPulse, CHANGE);
   }
+}
+
+inline void disconnect()
+{
+  detachInterrupt(digitalPinToInterrupt(RX_PIN));
+  _isReadyStatus = true;
 }
