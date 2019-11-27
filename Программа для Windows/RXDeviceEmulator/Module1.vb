@@ -4,8 +4,9 @@ Option Strict On
 Module Module1
     Private Const COMMAND_READY As Char = "r"c
     Private Const COMMAND_IN_WORK As Char = "w"c
+    Private Const COMMAND_COMP_ALIVE As Char = "a"c
     Private Const COMMAND_ANSWER As Char = "o"c
-    Private Const COMMAND_FIRE As Char = "f"c
+    'Private Const COMMAND_FIRE As Char = "f"c
     Private Const COMMAND_DISCONNECT As Char = "d"c
     Private Const SCAN_TIMEOUT As Integer = 100
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000
@@ -16,6 +17,7 @@ Module Module1
     Private mWorking As Boolean = False
     Private mTWorking As Threading.Thread, mConListener As Threading.Thread
     Private mEWH As New Threading.EventWaitHandle(False, Threading.EventResetMode.AutoReset)
+    Private mCompAliveReceived As Boolean = False
 
     Sub Main()
         Console.Write("Port name: ")
@@ -23,7 +25,7 @@ Module Module1
         mPort.ReadTimeout = -1
         mPort.ReceivedBytesThreshold = 1
         AddHandler mPort.DataReceived, Sub() mDataReceived = True
-        AddHandler mPort.DataReceived, AddressOf rebootComPortListener
+        AddHandler mPort.DataReceived, AddressOf comPortListener
         mPort.Open()
         mConListener = New Threading.Thread(New Threading.ThreadStart(AddressOf consoleListener))
         mConListener.Start()
@@ -69,24 +71,29 @@ Module Module1
             End If
         Loop
     End Sub
-    Private Sub rebootComPortListener(sender As Object, e As IO.Ports.SerialDataReceivedEventArgs)
+    Private Sub reboot()
+        mWorking = False
+        mDataReceived = False
+        mEWH.Set() 'Нужно запустить start так, т.к. при прямом запуске он запускается из другого потока.
+    End Sub
+    Private Sub comPortListener(sender As Object, e As IO.Ports.SerialDataReceivedEventArgs)
         If mWorking Then
             Dim buff(0) As Char
             mPort.Read(buff, 0, 1)
             If buff(0) = COMMAND_DISCONNECT Then
-                mWorking = False
-                mDataReceived = False
-                mEWH.Set() 'Нужно запустить start так, т.к. при прямом запуске он запускается из другого потока.
+                reboot()
+            ElseIf buff(0) = COMMAND_COMP_ALIVE Then
+                mCompAliveReceived = True
             End If
         End If
     End Sub
     Private Sub working()
         Do
-            'SyncLock mLock
             mPort.Write(COMMAND_IN_WORK)
-            'End SyncLock
             Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
             If Not mWorking Then Exit Do
+            If Not mCompAliveReceived Then reboot()
+            mCompAliveReceived = False
         Loop
     End Sub
 End Module

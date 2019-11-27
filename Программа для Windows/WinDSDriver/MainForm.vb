@@ -9,6 +9,7 @@ Public Class MainForm
     Private Const COMMAND_DISCONNECT As Char = "d"c
     Private Const SCAN_TIMEOUT As Integer = 100 * 2
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
+    Private Const SEND_COMP_ALIVE_TIMEOUT As Integer = 1000
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
     Private mWatching As Boolean = True
