@@ -26,7 +26,7 @@ Public Class MainForm
 
     Private mIsRefreshWatchFormShown As Boolean
     Private mMakeFire As Boolean = False
-    Private mAliveTimer As New Threading.Timer(Sub() devPort.Write(COMMAND_COMP_ALIVE))
+    Private mAliveTimer As New Threading.Timer(Sub() If devPort.IsOpen Then devPort.Write(COMMAND_COMP_ALIVE))
 
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         AddHandler RefreshWatch.RefreshWatchingEvent, Sub()
@@ -83,11 +83,11 @@ Public Class MainForm
         mHasConnection = False
         mWorkingThread.Join()
         devPort.Write(COMMAND_DISCONNECT)
+        mAliveTimer.Change(Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
         devPort.Close()
         log("Соединение сброшено", ToolTipIcon.Info)
         changeConnectMenuText()
         icon_NI.Icon = My.Resources.red
-        mAliveTimer.Change(Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
     End Sub
 
     Private Sub connect()
@@ -97,6 +97,7 @@ Public Class MainForm
         mWatching = True
         devPort.ReadTimeout = SCAN_TIMEOUT
         For Each sp As String In My.Computer.Ports.SerialPortNames
+            Debug.WriteLine(sp)
             devPort.PortName = sp
             Try
                 devPort.Open()
