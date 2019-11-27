@@ -10,6 +10,7 @@ Public Class MainForm
     Private Const SCAN_TIMEOUT As Integer = 100 * 2
     Private Const CHECK_DEVICE_TIMEOUT As Integer = 1000 * 2
     Private Const SEND_COMP_ALIVE_TIMEOUT As Integer = 1000
+    Private Const COMMAND_COMP_ALIVE As Char = "a"c
     Private mHasConnection As Boolean = False
     Private mWorkingThread As Threading.Thread
     Private mWatching As Boolean = True
@@ -25,6 +26,7 @@ Public Class MainForm
 
     Private mIsRefreshWatchFormShown As Boolean
     Private mMakeFire As Boolean = False
+    Private mAliveTimer As New Threading.Timer(New Threading.TimerCallback(Sub(state As Object) devPort.Write(COMMAND_COMP_ALIVE)), Nothing, Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
 
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         AddHandler RefreshWatch.RefreshWatchingEvent, Sub()
@@ -85,6 +87,7 @@ Public Class MainForm
         log("Соединение сброшено", ToolTipIcon.Info)
         changeConnectMenuText()
         icon_NI.Icon = My.Resources.red
+        mAliveTimer.Change(Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
     End Sub
 
     Private Sub connect()
@@ -116,6 +119,7 @@ Public Class MainForm
         log("Соединение установлено (" & devPort.PortName & ")", ToolTipIcon.Info)
         changeConnectMenuText()
         devPort.Write(COMMAND_ANSWER)
+        mAliveTimer.Change(0, SEND_COMP_ALIVE_TIMEOUT)
         Threading.Thread.Sleep(CHECK_DEVICE_TIMEOUT)
         devPort.ReadTimeout = CHECK_DEVICE_TIMEOUT
         mWorkingThread = New Threading.Thread(New Threading.ThreadStart(AddressOf working))
@@ -177,6 +181,7 @@ Public Class MainForm
             Catch ex As Exception
                 log("Устройство перестало отвечать.", ToolTipIcon.Warning)
                 showRefreshWatching(False)
+                mAliveTimer.Change(Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
                 devPort.Close()
                 mHasConnection = False
                 changeConnectMenuText()
@@ -190,6 +195,7 @@ Public Class MainForm
                     log("От устройства пришли неожиданные данные: " & buff(0), ToolTipIcon.Error)
                     showRefreshWatching(False)
                     devPort.Write(COMMAND_DISCONNECT) 'на всякий случай посылаем команду перезагрузиться устройству.
+                    mAliveTimer.Change(Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
                     devPort.Close()
                     mHasConnection = False
                     changeConnectMenuText()
