@@ -26,7 +26,7 @@ Public Class MainForm
 
     Private mIsRefreshWatchFormShown As Boolean
     Private mMakeFire As Boolean = False
-    Private mAliveTimer As New Threading.Timer(New Threading.TimerCallback(Sub(state As Object) devPort.Write(COMMAND_COMP_ALIVE)), Nothing, Threading.Timeout.Infinite, SEND_COMP_ALIVE_TIMEOUT)
+    Private mAliveTimer As New Threading.Timer(Sub() devPort.Write(COMMAND_COMP_ALIVE))
 
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         AddHandler RefreshWatch.RefreshWatchingEvent, Sub()
