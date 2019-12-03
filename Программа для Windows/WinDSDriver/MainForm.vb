@@ -93,7 +93,6 @@ Public Class MainForm
     Private Sub connect()
         If mHasConnection Then Return
         Dim buff(0) As Char
-        mHasConnection = False
         mWatching = True
         devPort.ReadTimeout = SCAN_TIMEOUT
         For Each sp As String In My.Computer.Ports.SerialPortNames
@@ -192,6 +191,9 @@ Public Class MainForm
             If Not buff(0) = COMMAND_IN_WORK Then
                 If buff(0) = COMMAND_FIRE Then
                     onFire()
+                ElseIf buff(0) = COMMAND_READY Then 'Компьютер завис и устройство отключилось, переподключаем.
+                    mHasConnection = False
+                    connect()
                 Else
                     log("От устройства пришли неожиданные данные: " & buff(0), ToolTipIcon.Error)
                     showRefreshWatching(False)
